@@ -1,275 +1,137 @@
 # Day 17 Submission
 **Student:** Nguyễn Thị Ngọc - 2A202600405
 **Date:** 24 Apr
-**Product idea:** TrustLayer AI đánh giá chatbot nội bộ
-
-
-# 1. MVP Boundary
-
-## In Scope (Chỉ giữ phần cần để test core hypothesis)
-
-Sau khi chatbot RAG trả lời xong, hệ thống tự động đánh giá độ tin cậy của câu trả lời và phân loại:
-
-- Safe  
-- Warning  
-- High Risk  
-- Human Review Required  
-
-Các câu trả lời rủi ro cao sẽ được:
-
-- log vào báo cáo có cấu trúc  
-- gắn lý do rủi ro (hallucination / retrieval lỗi / thiếu nguồn)  
-- chuyển Human Review cho SME / Compliance  
-- sau khi con người sửa → cập nhật vào knowledge base để cải thiện hệ thống
-
-## MVP tập trung vào
-
-### 1. Hallucination Detection
-
-Phát hiện câu trả lời không grounded với tài liệu nguồn.
-
-### 2. Retrieval Quality Check
-
-Kiểm tra retrieved chunks có đủ liên quan để hỗ trợ câu trả lời hay không.
-
-### 3. Trust Score cho từng response
-
-Chấm điểm mức độ đáng tin cậy thay vì chỉ pass/fail.
-
-### 4. Root-Cause Analysis cơ bản
-
-Xác định lỗi chủ yếu đến từ:
-
-- retrieval sai  
-- source outdated  
-- thiếu source  
-- prompt dẫn sai logic
-
-### 5. Dashboard đơn giản
-
-Hiển thị các case High Risk để team ưu tiên xử lý.
-
-
-## Out-of-Scope
-
-- Evaluate nhiều chatbot/AI products cùng lúc  
-- Multi-level approval workflow  
-- Audit Trail cấp enterprise  
-- Compliance reporting nâng cao  
-- Executive dashboard phức tạp  
-- Auto self-healing prompt optimization
-
-
-## Non-Goals
-
-- Không tối ưu prompt để chatbot trả lời hay hơn  
-- Không cạnh tranh với LangSmith, RAGAS hay vector DB  
-- Không xây chatbot mới  
-- Không thay thế hệ thống RAG hiện tại  
-
-
-# 2. PRD Skeleton (đã refine)
-
-## Problem
-
-Doanh nghiệp không biết chatbot RAG nội bộ đang trả lời đúng hay sai sau khi go-live.
-
-Việc chỉ test trước release không đủ bao phủ toàn bộ câu hỏi thực tế, dẫn đến:
-
-- hallucination  
-- lỗi nghiệp vụ  
-- compliance risk  
-- mất niềm tin vào AI
-
-
-## Target User
-
-### Primary User
-
-- Head of AI  
-- CIO Office  
-- AI Ops Team  
-- Product Owner của hệ thống RAG nội bộ
-
-### Secondary User
-
-- Compliance Team  
-- SME review team  
-- Nhân viên nghiệp vụ sử dụng chatbot
-
-
-## User Story #1
-
-As a Head of AI,  
-I want to biết câu trả lời nào của chatbot có rủi ro cao trước khi gây incident,  
-so that tôi có thể giảm lỗi nghiệp vụ và kiểm soát compliance risk.
-
-## User Story #2
-
-As an AI Ops Engineer,  
-I want to biết lỗi nằm ở retrieval, prompt hay dữ liệu nguồn,  
-so that tôi có thể sửa đúng root-cause thay vì debug thủ công nhiều ngày.
-
-
-## AI-Specific
-
-## Model Selection
-
-Sử dụng:
-
-- LLM-as-a-Judge (GPT / Claude)
-
-kết hợp với:
-
-- Rule-based checks
-
-vì cần đánh giá:
-
-- groundedness  
-- hallucination  
-- trust score  
-- explainability
-
-Rule-based đơn thuần không đủ chính xác.
-
-
-## Data Source
-
-Dữ liệu đầu vào gồm:
-
-- câu hỏi người dùng  
-- retrieved chunks từ RAG  
-- final answer của chatbot  
-- metadata của source  
-  (version, owner, effective date)  
-- knowledge base nội bộ  
-- feedback từ Human Review
-
-
-# 3. Fallback UX 
-
-## Trigger
-
-Fallback xảy ra khi:
-
-- trust score dưới ngưỡng an toàn  
-- confidence thấp  
-- thiếu supporting evidence  
-- phát hiện hallucination risk cao
-
-
-## User sees
-
-Hệ thống hiển thị:
-
-⚠ Warning: This answer may not be reliable
-
-Lý do:
-
-- thiếu nguồn dẫn chứng  
-- retrieval chưa đủ liên quan  
-- thông tin có thể outdated
-
-
-## User options
-
-Người dùng có thể:
-
-- yêu cầu Human Review  
-- xem source documents  
-- escalate cho SME / Compliance  
-- đánh dấu feedback “incorrect answer”
-
-
-## Recovery path
-
-Sau Human Review:
-
-- câu trả lời đúng được cập nhật vào knowledge base  
-- issue được log thành failure pattern  
-- hệ thống cải thiện trust scoring cho lần sau
-
-→ tránh lặp lại cùng một lỗi
-
-
-# 4. Hypothesis & PMF Scorecard (đã strengthen)
-
-## Riskiest Assumption
-
-Doanh nghiệp sẵn sàng trả tiền cho một lớp Trust Layer riêng biệt thay vì xem đây chỉ là một tính năng nhỏ của hệ thống RAG hiện tại.
-
-Nếu giả định này sai → sản phẩm rất khó bán.
-
-
-## Core Hypothesis
-
-Chúng tôi tin rằng:
-
-TrustLayer AI sẽ giúp doanh nghiệp giảm hậu quả nghiệp vụ gây ra bởi các câu trả lời sai từ RAG / Enterprise Search
-
-bằng cách:
-
-- phát hiện hallucination sớm  
-- giảm incident thật ngoài production  
-- tăng niềm tin để scale AI
-
-
-## Aha Moment
-
-Khách hàng thật sự nhận ra giá trị khi:
-
-TrustLayer AI phát hiện một câu trả lời sai mà team nội bộ chưa phát hiện trước đó
-
-và giúp họ tránh được một incident gây hậu quả nghiệp vụ thực tế.
-
-Đây là thời điểm khách hàng cảm thấy:
-
-“Chi phí mua sản phẩm nhỏ hơn rất nhiều so với chi phí xử lý hậu quả.”
-
-
-## PMF Signal
-
-Với 10 khách hàng enterprise pilot:
-
-Nếu ít nhất 30% chủ động tiếp tục sử dụng và đưa vào quy trình vận hành chính thức
-
-→ đây là tín hiệu PMF tích cực.
-
-
-## Sean Ellis Test
-
-“Nếu ngày mai TrustLayer AI không còn tồn tại, bạn sẽ thất vọng ở mức nào?”
-
-Tín hiệu tốt:
-
-Khách hàng cảm thấy không còn đủ an tâm để vận hành AI nội bộ nếu thiếu TrustLayer AI.
-
-
-## Retention
-
-Sau pilot:
-
-Khách hàng có tiếp tục dùng không?
-
-Tín hiệu tốt:
-
-≥ 30% khách hàng chủ động renew hoặc mở rộng scope sử dụng.
+**Product idea:** TrustLayer AI - Lớp đánh giá độ tin cậy cho chatbot nội bộ doanh nghiệp
 
 ---
 
-## Aha Metric
+## 1. MVP Boundary Sheet
 
+**Riskiest Assumption:**
+> Doanh nghiệp sẽ trả tiền cho một lớp "Trust Layer" riêng biệt thay vì xem đây là tính năng phụ của hệ thống RAG hiện tại.
 
-## Metric mới (actionable)
+**In-Scope** (tối đa 3):
+- [ ] **Automated Trust Score Calculation** — test giả định: AI có thể đánh giá chính xác độ tin cậy của response RAG
+- [ ] **Risk Classification Dashboard** — test giả định: Manager cần xem trực quan các response rủi ro cao để hành động
+- [ ] **Human Review Workflow** — test giả định: Doanh nghiệp sẵn sàng quy trình con người xác nhận các response AI đánh giá rủi ro
 
-### Prevented Incident Rate
+**Out-of-Scope:**
+- Multi-chatbot evaluation — lý do bỏ: Cần validation cho single chatbot trước
+- Executive dashboard — lý do bỏ: Manager dashboard là đủ cho MVP
+- Compliance reporting — lý do bỏ: Cần product-market fit trước
+- Multi-level approval — lý do bỏ: Single-level review đủ cho MVP
 
-Số lượng incident nghiệp vụ được ngăn chặn trước khi xảy ra
+**Non-Goals:**
+- Không tối ưu prompt để chatbot trả lời hay hơn
+- Không thay thế hệ thống RAG hiện tại
+- Không cạnh tranh với LangSmith, RAGAS
 
-Công thức:
+---
 
-Detected High-Risk Answers  
-→ Confirmed as True Risk  
-→ Fixed before business impact
+## 2. PRD Skeleton
 
-Đây là metric phản ánh trực tiếp core value của sản phẩm.
+### Problem Statement
+> Head of AI tại doanh nghiệp lớn đang mất 15-20% niềm tin vào chatbot RAG nội bộ vì không biết response nào có hallucination — mỗi lần sai gây ra lỗi nghiệp vụ và tốn chi phí sửa chữa.
+
+### Target User
+> Head of AI / CIO Office tại các doanh nghiệp lớn (>500 nhân viên) đang vận hành hệ thống RAG/Enterprise Search nội bộ.
+
+### User Stories
+**Story 1:**
+> As a Head of AI, I want to see all high-risk responses in real-time dashboard, so that I can prevent business operational errors before they impact customers.
+
+**Story 2:**
+> As an AI Ops Engineer, I want to know exactly whether errors come from retrieval, prompt, or data source, so that I can fix root cause within 30 minutes instead of spending hours debugging.
+
+### AI-Specific
+
+**Model Selection:**
+- Model: GPT-4o mini
+- Lý do chọn: Cân bằng giữa accuracy (đánh giá groundedness) và cost cho enterprise scale, latency <2s phù hợp real-time evaluation
+- Trade-offs chấp nhận: Accuracy 90-95% thay vì 98% của GPT-4o full
+- Trade-offs không chấp nhận: Latency >5s, cost >$0.01 per evaluation
+
+**Data Requirements:**
+- Nguồn: RAG system logs, user queries, retrieved chunks, chatbot responses, knowledge base metadata
+- Owner: AI Ops Team
+- Update frequency: Real-time for evaluation, daily for knowledge base updates
+- Quality control: Automated validation + weekly human audit
+
+**Fallback UX:**
+- Chiến lược: Human-in-the-loop
+- Trigger: Confidence score <80% hoặc khi response chứa conflicting information
+- Hành động: Hiển thị "AI Uncertain - Requires Review" banner, disable auto-approval, route to human reviewer queue
+- User options: Review & Edit, Escalate to SME, or Accept with Risk Acknowledgment
+
+### Success Metrics
+- Primary metric: % high-risk responses caught before user impact
+- Ngưỡng thành công: >85% high-risk responses flagged within 5 seconds
+- Timeframe đo lường: 30 ngày sau pilot
+
+### Dependencies & Constraints
+- API integration: OpenAI API, RAG system webhook
+- Timeline constraint: MVP trong 8 tuần
+- Budget constraint: < $5000/month for LLM costs
+- Legal constraint: Must comply with enterprise data privacy policies
+
+---
+
+## 3. Hypothesis Table
+
+### Hypothesis 1 (cho Automated Trust Score)
+> "Chúng tôi tin rằng automated trust score sẽ giúp Head of AI đạt được việc ngăn chặn 85% operational errors. Chúng tôi sẽ biết mình đúng khi thấy % high-risk responses caught before user impact đạt 85% trong 30 ngày."
+
+Riskiest assumption: LLM-as-judge có thể đánh giá chính xác groundedness của domain-specific content
+Cách test cheapest: Wizard of Oz MVP với 5 người đánh giá thủ công 100 responses
+
+### Hypothesis 2 (cho Risk Classification Dashboard)
+> "Chúng tôi tin rằng real-time risk dashboard sẽ giúp Manager đạt được việc giảm 50% time-to-detect issues. Chúng tôi sẽ biết mình đúng khi thấy average time from high-risk response to human review giảm từ 4 giờ xuống 2 giờ trong 2 tuần."
+
+Riskiest assumption: Manager thực sự monitor dashboard real-time
+Cách test cheapest: Landing page MVP với mock dashboard và email alerts
+
+---
+
+## 4. PMF Scorecard
+
+**Aha Moment:**
+> Head of AI lần đầu thấy dashboard flag một response high-risk, click vào xem root cause là retrieval error, fix data source, và prevent 10 users khỏi getting wrong answer.
+
+**Actionable Metric:**
+> % of enterprises that reduce operational incidents by >20% within 60 days of implementation
+
+**PMF Method:**
+> Sean Ellis Test — ngưỡng: >40% "Very disappointed"
+> Retention Curve — ngưỡng: D30 retention > 30% for enterprise customers
+> Aha Moment tracking — ngưỡng: 60% customers achieve first prevented error within 14 days
+
+**Vanity Metrics tôi sẽ không dùng:**
+- Total dashboard views
+- Number of evaluations performed
+- Sign-up count
+- API call volume
+
+---
+
+## 5. AI Critique Log
+
+**Điểm AI chỉ ra:**
+1. **Scope creep** — In-Scope có 6 tính năng, cần cắt xuống 3 — Action: Accept — Lý do: Handbook yêu cầu tối đa 3 tính năng để focus
+2. **Vague fallback UX** — Chỉ ghi "hiển thị Warning" — Action: Accept — Lý do: Cần trigger và action cụ thể theo template
+3. **Missing actionable metrics** — Dùng vanity metrics — Action: Accept — Lý do: Cần metrics gắn với business outcomes
+4. **Weak hypothesis format** — Chưa theo công thức chuẩn — Action: Accept — Lý do: Handbook yêu cầu công thức cụ thể
+
+**Thay đổi lớn nhất giữa Version A và Version B:**
+> Cắt MVP từ 6 tính năng xuống 3 tính năng focus, thêm 3 thành phần AI-specific vào PRD, viết lại hypothesis theo công thức chuẩn, và định nghĩa actionable metrics thay vì vanity metrics.
+
+---
+
+## 6. Self-assessment
+
+Mắt xích nào trong [MVP Boundary → PRD → Hypothesis → PMF] bạn đang yếu nhất?
+> PMF Scorecard — vẫn còn khó định nghĩa actionable metrics thực sự cho enterprise product
+
+Open questions bạn muốn giải đáp tiếp:
+1. Làm sao để đo "prevented operational errors" khi customer không report errors được prevented?
+2. Threshold cho retention curve có thực sự 30% cho enterprise products hay cần khác?
+3. Wizard of Oz MVP có thực sự feasible cho LLM-as-judge evaluation?
