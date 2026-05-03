@@ -10,7 +10,7 @@
 **Riskiest Assumption:**
 > Doanh nghiệp sẽ trả tiền cho một lớp "Trust Layer" riêng biệt thay vì xem đây là tính năng phụ của hệ thống RAG hiện tại.
 
-**In-Scope** (tối đa 3):
+**In-Scope** :
 - [ ] **Automated Trust Score Calculation** — test giả định: AI có thể đánh giá chính xác độ tin cậy của response RAG
 - [ ] **Risk Classification Dashboard** — test giả định: Manager cần xem trực quan các response rủi ro cao để hành động
 - [ ] **Human Review Workflow** — test giả định: Doanh nghiệp sẵn sàng quy trình con người xác nhận các response AI đánh giá rủi ro
